@@ -1,16 +1,19 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import "./App.css";
 import { OKXUniversalConnectUI } from "@okxconnect/ui";
 
+
+const chainId = '1'
 function App() {
   const [address, setAddress] = useState("");
   const [client, setClient] = useState<OKXUniversalConnectUI | null>(null);
-  const [isIniting, setIniting] = useState(false);
+  const initRef = useRef(false);
 
   useEffect(() => {
     async function initClient() {
-      setIniting(true);
+      if(initRef.current) return;
+      initRef.current = true;
       try {
         const client = await OKXUniversalConnectUI.init({
           dappMetaData: {
@@ -21,14 +24,13 @@ function App() {
             returnStrategy: "tg://resolve",
             modals: "all",
             tmaReturnUrl: "back",
-          },
-          restoreConnection: true,
-        } as any);
+          }
+        });
         setClient(client);
       } catch (e) {
         console.error(e);
       } finally {
-        setIniting(false);
+        initRef.current = false
       }
     }
     initClient();
@@ -52,7 +54,7 @@ function App() {
         <button
           onClick={async () => {
             try {
-              if(isIniting) {
+              if(initRef.current) {
                 alert("正在初始化，请稍后再试")
                 return;
               }
@@ -68,8 +70,8 @@ function App() {
               const session = await client.openModal({
                 namespaces: {
                   eip155: {
-                    chains: ["eip155:223"],
-                    defaultChain: "223",
+                    chains: [`eip155:${chainId}`],
+                    defaultChain: chainId,
                     rpcMap: {
                       "223": "https://rpc.bsquared.network",
                     },
